@@ -65,7 +65,7 @@ def generate_filial(parent1, parent2):
     filial_genotype = [unique, ratios]
     implicit_phenotypes_ratio = [list(pheno_map.keys()), list(pheno_map.values())]
 
-    headered_matrix = [[None] + parent1]
+    headered_matrix = [["♂/♀"] + parent1]
     for i, row in enumerate(matrix):
         headered_matrix.append([parent2[i]] + row)
 
