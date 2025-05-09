@@ -11,21 +11,30 @@ class MendelApp(Gtk.Application):
     def on_activate(self, app):
         self.win = Gtk.ApplicationWindow(application=app)
         self.win.set_title("Mendel Calculator")
-        self.win.set_default_size(400, 300)
+        self.win.set_default_size(260, 350)
 
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12, margin_top=16, margin_bottom=16, margin_start=16, margin_end=16)
+        vbox = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=12,
+            margin_top=16,
+            margin_bottom=16,
+            margin_start=16,
+            margin_end=16
+        )
         self.win.set_child(vbox)
 
         self.entry1 = Gtk.Entry(placeholder_text="P1 Genotype")
         self.entry2 = Gtk.Entry(placeholder_text="P2 Genotype")
         vbox.append(self.entry1)
         vbox.append(self.entry2)
-
-        self.checkbox = Gtk.CheckButton(label="Genotype Ratio")
-        vbox.append(self.checkbox)
+    
+        self.chk_genotype = Gtk.CheckButton(label="Show genotype ratios")
+        self.chk_genotype.set_active(False)
+        vbox.append(self.chk_genotype)
 
         self.entry1.connect("changed", self.on_input_change)
         self.entry2.connect("changed", self.on_input_change)
+        self.chk_genotype.connect("toggled", self.on_toggle_genotype)
 
         self.matrix_grid = Gtk.Grid(column_spacing=8, row_spacing=8)
         vbox.append(self.matrix_grid)
@@ -37,17 +46,37 @@ class MendelApp(Gtk.Application):
         vbox.append(self.implicit_phenotype_grid)
 
         self.win.show()
+        self.on_input_change(None)
 
     def on_input_change(self, entry):
         input1 = self.entry1.get_text()
         input2 = self.entry2.get_text()
 
-        matrix, genotype, implicit_phenotypes = generate_filial(generate_gametes(input1), generate_gametes(input2))
+        if not input1 or not input2 or len(input1) != len(input2):
+            return
 
-        if len(input1) == len(input2):
-            self.populate_matrix(matrix)
+        matrix, genotype, implicit_phenotypes = generate_filial(
+            generate_gametes(input1),
+            generate_gametes(input2)
+        )
+
+        self.populate_matrix(matrix)
+
+        if self.chk_genotype.get_active():
             self.populate_genotype_grid(genotype[0], genotype[1])
-            self.populate_implicit_phenotype_grid(implicit_phenotypes[0], implicit_phenotypes[1])
+            self.genotype_grid.set_visible(True)
+        else:
+            self.genotype_grid.set_visible(False)
+
+        self.populate_implicit_phenotype_grid(
+            implicit_phenotypes[0], implicit_phenotypes[1]
+        )
+
+    def on_toggle_genotype(self, chk):
+        is_active = chk.get_active()
+        self.genotype_grid.set_visible(is_active)
+        if is_active:
+            self.on_input_change(None)
 
     def populate_matrix(self, matrix):
         for child in list(self.matrix_grid):
@@ -82,5 +111,6 @@ class MendelApp(Gtk.Application):
             label = Gtk.Label(label=str(value))
             self.implicit_phenotype_grid.attach(label, col_idx, 1, 1, 1)
 
-app = MendelApp()
-app.run()
+if __name__ == '__main__':
+    app = MendelApp()
+    app.run()
