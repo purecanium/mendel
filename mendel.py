@@ -1,21 +1,21 @@
 from itertools import product
 
-def generate_gametes(s):
-    if len(s) % 2 != 0:
+def generate_gametes(genotype):
+    if len(genotype) % 2 != 0:
         raise ValueError("Input must have an even number of characters.")
 
-    for i in range(0, len(s), 2):
-        if s[i].lower() != s[i + 1].lower():
+    for i in range(0, len(genotype), 2):
+        if genotype[i].lower() != genotype[i + 1].lower():
             raise ValueError(f"Characters at positions {i} and {i+1} must be the same letter.")
 
     groups = {}
-    for char in s:
+    for char in genotype:
         groups.setdefault(char.lower(), set()).add(char)
     choices = list(groups.values())
     combos = set(''.join(p) for p in product(*choices))
     return sorted(combos)
 
-def generate_filial(parent1, parent2):
+def generate_filial(gametes1, gametes2):
     def merge(h1, h2):
         return ''.join(
             ''.join(sorted([a, b], key=lambda c: (c.islower(), c)))
@@ -32,19 +32,19 @@ def generate_filial(parent1, parent2):
             d = gcd(d, c)
         return [c // d for c in counts]
 
-    def get_phenotype(geno):
+    def get_impl_phenotype(geno):
         loci = [geno[i:i+2] for i in range(0, len(geno), 2)]
-        phenotype = []
+        impl_phenotype = []
         for pair in loci:
             upper = any(c.isupper() for c in pair)
             if upper:
-                phenotype.append(pair[0].upper() + '-')
+                impl_phenotype.append(pair[0].upper() + '-')
             else:
-                phenotype.append(pair[0].lower() * 2)
-        return ''.join(phenotype)
+                impl_phenotype.append(pair[0].lower() * 2)
+        return ''.join(impl_phenotype)
 
-    matrix = [[merge(h1, h2) for h1 in parent1] for h2 in parent2]
-    flat = [geno for row in matrix for geno in row]
+    punnet_matrix = [[merge(h1, h2) for h1 in gametes1] for h2 in gametes2]
+    flat = [geno for row in punnet_matrix for geno in row]
 
     seen = []
     for g in flat:
@@ -56,17 +56,17 @@ def generate_filial(parent1, parent2):
 
     pheno_map = {}
     for g, r in zip(unique, ratios):
-        pheno = get_phenotype(g)
+        pheno = get_impl_phenotype(g)
         if pheno in pheno_map:
             pheno_map[pheno] += r
         else:
             pheno_map[pheno] = r
 
-    filial_genotype = [unique, ratios]
-    implicit_phenotypes_ratio = [list(pheno_map.keys()), list(pheno_map.values())]
+    genotypes = [unique, ratios]
+    impl_phenotype = [list(pheno_map.keys()), list(pheno_map.values())]
 
-    headered_matrix = [["♂/♀"] + parent1]
-    for i, row in enumerate(matrix):
-        headered_matrix.append([parent2[i]] + row)
+    headered_punnet_matrix = [["♂/♀"] + gametes1]
+    for i, row in enumerate(punnet_matrix):
+        headered_punnet_matrix.append([gametes2[i]] + row)
 
-    return headered_matrix, filial_genotype, implicit_phenotypes_ratio
+    return headered_punnet_matrix, genotypes, impl_phenotype
