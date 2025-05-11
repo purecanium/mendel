@@ -16,6 +16,17 @@ def generate_gametes(genotype):
     return sorted(combos)
 
 def generate_filial(gametes1, gametes2):
+    all_gametes = gametes1 + gametes2
+    max_len = max(map(len, all_gametes), default=0)
+    dominant, recessive = [], []
+    for i in range(max_len):
+        chars = [g[i] for g in all_gametes if len(g) > i]
+        d = next((c for c in chars if c.isupper()), "")
+        r = next((c for c in chars if c.islower()), "")
+        dominant.append(d.upper() if d else "")
+        recessive.append(r.lower() if r else "")
+    loci = [ (d if d else r.upper()) for d, r in zip(dominant, recessive) ]
+
     def merge(h1, h2):
         return ''.join(
             ''.join(sorted([a, b], key=lambda c: (c.islower(), c)))
@@ -63,10 +74,27 @@ def generate_filial(gametes1, gametes2):
             pheno_map[pheno] = r
 
     genotypes = [unique, ratios]
-    impl_phenotype = [list(pheno_map.keys()), list(pheno_map.values())]
+    implicit_phenotypes = [list(pheno_map.keys()), list(pheno_map.values())]
 
-    headered_punnet_matrix = [["♂/♀"] + gametes1]
+    headered_punnet_square = [["♂/♀"] + gametes1]
     for i, row in enumerate(punnet_matrix):
-        headered_punnet_matrix.append([gametes2[i]] + row)
+        headered_punnet_square.append([gametes2[i]] + row)
 
-    return headered_punnet_matrix, genotypes, impl_phenotype
+    return headered_punnet_square, genotypes, implicit_phenotypes, loci
+
+def generate_expl_phenotypes(loci, implicit_phenotypes, explicit_labels):
+    implicit_patterns = implicit_phenotypes[0]
+    phenotypes_ratio = implicit_phenotypes[1]
+    phenotypes = []
+    for pat in implicit_patterns:
+        segs = [pat[i:i+2] for i in range(0, len(pat), 2)]
+        names = []
+        for seg, locus in zip(segs, loci):
+            idx = loci.index(locus)
+            dom_label = explicit_labels[idx*2]
+            rec_label = explicit_labels[idx*2 + 1]
+            names.append(dom_label if seg[0].isupper() else rec_label)
+        phenotypes.append(" ".join(names))
+
+    explicit_phenotypes = [phenotypes, phenotypes_ratio]
+    return explicit_phenotypes
