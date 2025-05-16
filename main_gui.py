@@ -173,13 +173,13 @@ class MendelApp(Gtk.Application):
         matrix, self.geno, self.impl_pheno, self.loci = generate_filial(generate_gametes(p1), generate_gametes(p2))
         self.populate_matrix(matrix)
         self.populate_two_row_grid(self.phenotype_grid, self.impl_pheno)
+        self.populate_two_row_grid(self.genotype_grid, self.geno)
         self.build_explicit_entries(self.loci)
         for c in list(self.explicit_pheno_grid): self.explicit_pheno_grid.remove(c)
         self.explicit_pheno_sec.set_visible(False)
 
     def on_chk_toggle(self, *_):
         if self.chk.get_active():
-            self.populate_two_row_grid(self.genotype_grid, self.geno)
             self.geno_sec.set_visible(True)
         else:
             self.geno_sec.set_visible(False)
